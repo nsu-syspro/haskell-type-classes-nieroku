@@ -5,7 +5,6 @@
 module Task1 where
 
 import Data.Function ((&))
-import Data.List (foldl')
 import Text.Read (readMaybe)
 
 -- * Expression data type
@@ -63,7 +62,7 @@ instance Parse Integer where
 -- >>> parse "2 3" :: Maybe IExpr
 -- Nothing
 instance Parse IExpr where
-  parse = result . (foldl' (&) (Just []) =<<) . sequence . (map parseStackOp) . words
+  parse = result . (foldl (&) (Just []) =<<) . sequence . (map parseStackOp) . words
     where
       put :: Integer -> Maybe [IExpr] -> Maybe [IExpr]
       put = fmap . (:) . Lit
