@@ -43,6 +43,9 @@ class Parse a where
   -- wrapped in 'Maybe' with 'Nothing' indicating failure to parse
   parse :: String -> Maybe a
 
+instance Parse Integer where
+  parse = readMaybe
+
 -- | Parses given expression in Reverse Polish Notation
 -- wrapped in 'Maybe' with 'Nothing' indicating failure to parse
 --
@@ -71,7 +74,7 @@ instance Parse IExpr where
       parseStackOp :: String -> Maybe (Maybe [IExpr] -> Maybe [IExpr])
       parseStackOp "+" = Just $ performBinOp Add
       parseStackOp "*" = Just $ performBinOp Mul
-      parseStackOp value = putValue <$> readMaybe value
+      parseStackOp value = (fmap putValue) . parse $ value
       --
       result :: Maybe [IExpr] -> Maybe IExpr
       result (Just [expr]) = Just expr
