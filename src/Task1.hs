@@ -5,6 +5,7 @@
 module Task1 where
 
 import Data.Function ((&))
+import Data.List (foldl')
 import Text.Read (readMaybe)
 
 -- * Expression data type
