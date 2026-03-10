@@ -1,18 +1,23 @@
 {-# OPTIONS_GHC -Wall #-}
+
 -- The above pragma enables all warnings
 
 module Task1 where
+
+import Data.Function ((&))
+import Data.List (foldl')
+import Text.Read (readMaybe)
 
 -- * Expression data type
 
 -- | Representation of integer arithmetic expressions comprising
 -- - Literals of type 'a'
 -- - Binary operations 'Add' and 'Mul'
-data IExpr =
-    Lit Integer
+data IExpr
+  = Lit Integer
   | Add IExpr IExpr
   | Mul IExpr IExpr
-  deriving Show
+  deriving (Show)
 
 -- * Evaluation
 
@@ -26,9 +31,10 @@ data IExpr =
 -- 5
 -- >>> evalIExpr (Add (Mul (Lit 3) (Lit 2)) (Lit 3))
 -- 9
---
 evalIExpr :: IExpr -> Integer
-evalIExpr = error "TODO: define evalIExpr"
+evalIExpr (Lit value) = value
+evalIExpr (Add x y) = (evalIExpr x) + (evalIExpr y)
+evalIExpr (Mul x y) = (evalIExpr x) * (evalIExpr y)
 
 -- * Parsing
 
@@ -37,6 +43,9 @@ class Parse a where
   -- | Parses value 'a' from given string
   -- wrapped in 'Maybe' with 'Nothing' indicating failure to parse
   parse :: String -> Maybe a
+
+instance Parse Integer where
+  parse = readMaybe
 
 -- | Parses given expression in Reverse Polish Notation
 -- wrapped in 'Maybe' with 'Nothing' indicating failure to parse
@@ -53,9 +62,24 @@ class Parse a where
 -- Nothing
 -- >>> parse "2 3" :: Maybe IExpr
 -- Nothing
---
 instance Parse IExpr where
-  parse = error "TODO: define parse (Parse IExpr)"
+  parse = result . (foldl' (&) (Just []) =<<) . sequence . (map parseStackOp) . words
+    where
+      put :: Integer -> Maybe [IExpr] -> Maybe [IExpr]
+      put = fmap . (:) . Lit
+      --
+      foldBinOp :: (IExpr -> IExpr -> IExpr) -> Maybe [IExpr] -> Maybe [IExpr]
+      foldBinOp op (Just (y : x : stack)) = Just ((op x y) : stack)
+      foldBinOp _ _ = Nothing
+      --
+      parseStackOp :: String -> Maybe (Maybe [IExpr] -> Maybe [IExpr])
+      parseStackOp "+" = Just (foldBinOp Add)
+      parseStackOp "*" = Just (foldBinOp Mul)
+      parseStackOp value = put <$> parse value
+      --
+      result :: Maybe [IExpr] -> Maybe IExpr
+      result (Just [expr]) = Just expr
+      result _ = Nothing
 
 -- * Evaluation with parsing
 
@@ -75,6 +99,5 @@ instance Parse IExpr where
 -- Nothing
 -- >>> evaluateIExpr "2 3"
 -- Nothing
---
 evaluateIExpr :: String -> Maybe Integer
-evaluateIExpr = error "TODO: define evaluateIExpr"
+evaluateIExpr = (fmap evalIExpr) . parse
