@@ -6,7 +6,7 @@ module Task2 where
 
 import Control.Applicative ((<|>))
 import Data.Function ((&))
-import Data.List (find)
+import Data.List (find, foldl')
 import Data.Maybe (fromMaybe)
 import Task1 (Parse (..))
 
