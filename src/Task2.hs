@@ -55,16 +55,16 @@ instance (Parse a, Parse op) => Parse (Expr a op) where
       put :: Expr a op -> Maybe [Expr a op] -> Maybe [Expr a op]
       put = fmap . (:)
 
-      performBinOp :: op -> Maybe [Expr a op] -> Maybe [Expr a op]
-      performBinOp op (Just (rhs : lhs : stack)) = Just ((BinOp op lhs rhs) : stack)
-      performBinOp _ _ = Nothing
+      foldBinOp :: op -> Maybe [Expr a op] -> Maybe [Expr a op]
+      foldBinOp op (Just (y : x : stack)) = Just ((BinOp op x y) : stack)
+      foldBinOp _ _ = Nothing
 
       parseStackOp :: String -> (Maybe [Expr a op] -> Maybe [Expr a op])
       parseStackOp word = lit <|> binOp & (fromMaybe var)
         where
           lit = put . Lit <$> parse word
-          binOp = performBinOp <$> parse word
-          var = put $ Var word
+          binOp = foldBinOp <$> parse word
+          var = put (Var word)
 
       result :: Maybe [Expr a op] -> Maybe (Expr a op)
       result (Just [expr]) = Just expr
@@ -99,7 +99,7 @@ evalExpr variables = eval'
   where
     eval' (Lit value) = Just value
     eval' (Var var) = snd <$> find ((== var) . fst) variables
-    eval' (BinOp op lhs rhs) = liftA2 (evalBinOp op) (eval' lhs) (eval' rhs)
+    eval' (BinOp op x y) = liftA2 (evalBinOp op) (eval' x) (eval' y)
 
 -- | Parses given integer expression in Reverse Polish Notation and evaluates it
 -- using given association list of variable values

@@ -32,8 +32,8 @@ data IExpr
 -- 9
 evalIExpr :: IExpr -> Integer
 evalIExpr (Lit value) = value
-evalIExpr (Add lhs rhs) = (evalIExpr lhs) + (evalIExpr rhs)
-evalIExpr (Mul lhs rhs) = (evalIExpr lhs) * (evalIExpr rhs)
+evalIExpr (Add x y) = (evalIExpr x) + (evalIExpr y)
+evalIExpr (Mul x y) = (evalIExpr x) * (evalIExpr y)
 
 -- * Parsing
 
@@ -64,17 +64,17 @@ instance Parse Integer where
 instance Parse IExpr where
   parse = result . (foldl' (&) (Just []) =<<) . sequence . (map parseStackOp) . words
     where
-      putValue :: Integer -> Maybe [IExpr] -> Maybe [IExpr]
-      putValue = fmap . (:) . Lit
+      put :: Integer -> Maybe [IExpr] -> Maybe [IExpr]
+      put = fmap . (:) . Lit
       --
-      performBinOp :: (IExpr -> IExpr -> IExpr) -> Maybe [IExpr] -> Maybe [IExpr]
-      performBinOp op (Just (x : y : stack)) = Just $ (op x y) : stack
-      performBinOp _ _ = Nothing
+      foldBinOp :: (IExpr -> IExpr -> IExpr) -> Maybe [IExpr] -> Maybe [IExpr]
+      foldBinOp op (Just (y : x : stack)) = Just ((op x y) : stack)
+      foldBinOp _ _ = Nothing
       --
       parseStackOp :: String -> Maybe (Maybe [IExpr] -> Maybe [IExpr])
-      parseStackOp "+" = Just $ performBinOp Add
-      parseStackOp "*" = Just $ performBinOp Mul
-      parseStackOp value = (fmap putValue) . parse $ value
+      parseStackOp "+" = Just (foldBinOp Add)
+      parseStackOp "*" = Just (foldBinOp Mul)
+      parseStackOp value = put <$> parse value
       --
       result :: Maybe [IExpr] -> Maybe IExpr
       result (Just [expr]) = Just expr
